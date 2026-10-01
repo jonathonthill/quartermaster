@@ -62,7 +62,9 @@ const I = {
   chevron: () => svg('<path d="m6 9 6 6 6-6"/>', 14),
   server: (size) => svg('<rect width="20" height="8" x="2" y="2" rx="2" ry="2"/><rect width="20" height="8" x="2" y="14" rx="2" ry="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/>', size),
   laptop: (size) => svg('<path d="M18 5a2 2 0 0 1 2 2v8.526a2 2 0 0 0 .212.897l1.068 2.127a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45l1.068-2.127A2 2 0 0 0 4 15.526V7a2 2 0 0 1 2-2z"/><path d="M20.054 15.987H3.946"/>', size),
-  globe: (size) => svg('<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>', size),
+  // A network folder: Lucide's folder, made smaller, joined by a stem to a jack on a line.
+  netFolder: (size) => svg('<g transform="translate(3.4 -0.2) scale(0.72)" stroke-width="2.5"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></g>'
+    + '<path d="M12 14.4V18"/><path d="M2 21h8M14 21h8"/><rect x="10" y="18" width="4" height="4" rx="1"/>', size),
   barrel: () => svg(BARREL),
   play: () => svg('<path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/>', 14),
   pause: () => svg('<rect x="14" y="3" width="5" height="18" rx="1"/><rect x="5" y="3" width="5" height="18" rx="1"/>', 14),
@@ -95,8 +97,8 @@ const I = {
   },
 };
 
-// A server's icon: a datahold's barrels, a globe for an SFTP server, or a rack for a file server.
-const serverIcon = (server, size) => (server?.kind === 'archive' ? I.datahold(size) : server?.kind === 'sftp' ? I.globe(size) : I.server(size));
+// A server's icon: a datahold's barrels, a network folder for an SFTP server, or a rack for a file server.
+const serverIcon = (server, size) => (server?.kind === 'archive' ? I.datahold(size) : server?.kind === 'sftp' ? I.netFolder(size) : I.server(size));
 
 function fmtBytes(n) {
   if (n == null) return '—';
