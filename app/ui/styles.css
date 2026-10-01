@@ -194,7 +194,10 @@ body[data-mode="transfer"] .modebar .ic { color: var(--accent); }
 .pane.left .cols { padding: 0 36px 0 12px; }
 .pane.right .cols { padding: 0 12px 0 36px; }
 .pane .row { padding: 0 6px; }
-.pane.left .row { margin: 0 30px 0 6px; }
+.pane.left .row { margin: 0 12px 0 6px; }
+/* The left list stops short of the transfer button, so its scroll bar sits in the gap between
+   the dates and the button instead of under it. */
+.pane.left .list { margin-right: 18px; }
 .pane.right .row { margin: 0 6px 0 30px; }
 .list { padding: 2px 0; }
 .cols { height: 26px; font-size: 11px; color: var(--cols); border-bottom: 1px solid var(--border); }
