@@ -400,23 +400,30 @@ function locationSelect(i) {
   const files = !stowMode() || i === 0;
   const addLabel = files ? 'Add a file server…' : 'Add a datahold…';
   const label = stowMode() ? (i === 0 ? 'Source' : 'Datahold') : i === 0 ? 'Left side' : 'Right side';
-  const sel = h('select', { 'aria-label': label, onchange: (e) => (e.target.value === '__add' ? settingsDialog({ add: files ? 'files' : 'archive' }) : openLocation(i, e.target.value)) });
+  const sel = h('select', { 'aria-label': label, onchange: (e) => (e.target.value === '__add' ? addServerDialog(i, addKinds(i)) : openLocation(i, e.target.value)) });
   // SFTP servers take part in Transfer mode only (stowing needs the helper).
   const servers = S.settings.servers.filter((s) => (files ? s.kind === 'files' || (s.kind === 'sftp' && !stowMode()) : s.kind === 'archive'));
   if (files) {
     sel.append(h('option', { value: 'local', text: 'This computer' }));
     if (servers.length) {
       const g = h('optgroup', { label: 'File servers' });
-      for (const s of servers) g.append(h('option', { value: s.id, text: s.kind === 'sftp' ? `${s.name} (SFTP)` : s.name }));
+      for (const s of servers) g.append(h('option', { value: s.id, text: `${s.name}${s.kind === 'sftp' ? ' (SFTP)' : ''}${s.temporary ? ' (not saved)' : ''}` }));
       sel.append(g);
     }
   } else {
-    for (const s of servers) sel.append(h('option', { value: s.id, text: s.name }));
+    for (const s of servers) sel.append(h('option', { value: s.id, text: `${s.name}${s.temporary ? ' (not saved)' : ''}` }));
   }
   sel.append(h('option', { value: '__add', text: addLabel }));
   if (!p.loc) sel.prepend(h('option', { value: '', text: files ? 'No file server yet' : 'No datahold yet', selected: true, disabled: true }));
   else sel.value = p.loc;
   return sel;
+}
+
+// The kinds of server a pane can add: a datahold on Stow's right; otherwise file servers, and in
+// Transfer mode SFTP servers too.
+function addKinds(i) {
+  if (stowMode() && i === 1) return ['archive'];
+  return stowMode() ? ['files'] : ['files', 'sftp'];
 }
 
 function statusBadge(p) {
@@ -446,10 +453,10 @@ function renderPane(i) {
     root.append(stowMode() || i === 0
       ? h('div', { class: 'empty' }, h('span', { class: 'pane-icon' }, I.datahold(40)), h('h3', { text: 'No datahold yet' }),
         h('p', { text: 'A datahold is where your data is kept on the archive server. Add the server that holds it to get started.' }),
-        h('button', { class: 'btn primary', text: 'Add a datahold', onclick: () => settingsDialog({ add: 'archive' }) }))
+        h('button', { class: 'btn primary', text: 'Add a datahold', onclick: () => addServerDialog(i, ['archive']) }))
       : h('div', { class: 'empty' }, h('span', { class: 'pane-icon' }, I.server(40)), h('h3', { text: 'No file server yet' }),
         h('p', { text: 'Add an analysis server or other machine you can reach over SSH, to copy files to and from it.' }),
-        h('button', { class: 'btn primary', text: 'Add a file server', onclick: () => settingsDialog({ add: 'files' }) })));
+        h('button', { class: 'btn primary', text: 'Add a file server', onclick: () => addServerDialog(i, addKinds(i)) })));
     updateXferButtons();
     return;
   }
@@ -2030,7 +2037,7 @@ function settingsDialog({ add = null } = {}) {
     for (const s of draft.servers) {
       list.append(h('div', { class: `server-item${keyOf(s) === current ? ' on' : ''}`, onclick: () => { current = keyOf(s); render(); } },
         h('span', { class: `kind-icon${s.kind === 'archive' ? ' pane-icon' : ''}` }, serverIcon(s, s.kind === 'archive' ? 18 : undefined)),
-        h('div', { style: 'min-width:0' }, h('div', { text: s.name || s.host || 'New server', style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap' }), h('div', { class: 'kind', text: s.kind === 'archive' ? 'Datahold' : s.kind === 'sftp' ? 'SFTP server' : 'File server' }))));
+        h('div', { style: 'min-width:0' }, h('div', { text: s.name || s.host || 'New server', style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap' }), h('div', { class: 'kind', text: `${s.kind === 'archive' ? 'Datahold' : s.kind === 'sftp' ? 'SFTP server' : 'File server'}${s.temporary ? ' · not saved' : ''}` }))));
     }
     list.append(h('button', { class: 'btn', style: 'margin-top:8px', text: 'Add server', onclick: () => {
       const s = { id: '', name: '', kind: 'files', host: '', port: null, user: '', root: '', _new: Math.random() };
@@ -2042,66 +2049,14 @@ function settingsDialog({ add = null } = {}) {
     const form = h('div', { class: 'server-form' });
     if (!s) form.append(h('p', { style: 'color:var(--text-3)', text: 'Add a server to get started.' }));
     else {
-      const input = (key, attrs = {}) => h('input', { value: s[key] ?? '', ...attrs, oninput: (e) => { s[key] = key === 'port' ? (Number(e.target.value) || null) : e.target.value; if (key === 'name' || key === 'host') list.querySelector('.server-item.on div div').textContent = s.name || s.host || 'New server'; } });
-      const kind = h('select', { onchange: (e) => { s.kind = e.target.value; render(); } }, h('option', { value: 'archive', text: 'Datahold (shown on the right)' }), h('option', { value: 'files', text: 'File server, such as an analysis server (shown on the left)' }), h('option', { value: 'sftp', text: 'SFTP server, without the helper (Transfer mode only)' }));
-      kind.value = s.kind;
-      const result = h('div', { class: 'status-line' });
-      const testBtn = h('button', { class: 'btn', text: 'Test connection' });
-      testBtn.onclick = async () => {
-        if (!s.host.trim()) { result.replaceChildren(h('span', { class: 'bad-text', text: 'Enter the server address first.' })); return; }
-        testBtn.disabled = true;
-        result.replaceChildren(h('div', { class: 'spinner', style: 'width:14px;height:14px' }), h('span', { text: 'Connecting… (answer any password or Duo prompt)' }));
-        const info = await call('test_server', { server: { ...s, id: s.id || 'new' } }).catch((e) => ({ connected: false, message: String(e) }));
-        testBtn.disabled = false;
-        showTest(s, info, result, testBtn);
-      };
       form.append(
-        h('div', { class: 'field' }, h('label', { text: 'Display name' }), input('name', { placeholder: 'Lab datahold' })),
-        h('div', { class: 'field' }, h('label', { text: 'Type' }), kind),
-        h('div', { class: 'grid2' },
-          h('div', { class: 'field' }, h('label', { text: 'Server address' }), input('host', { placeholder: 'server.example.edu', autocapitalize: 'off', spellcheck: 'false' }), h('div', { class: 'hint', text: 'A host name, or a name from your ~/.ssh/config.' })),
-          h('div', { class: 'field' }, h('label', { text: 'Port' }), input('port', { placeholder: '22', inputmode: 'numeric' }))),
-        h('div', { class: 'field' }, h('label', { text: 'Username' }), input('user', { placeholder: 'Leave blank to use your SSH settings', autocapitalize: 'off', spellcheck: 'false' }), h('div', { class: 'hint', text: 'Your SSH key is used if you have one; otherwise the app asks for your password (and Duo, if the server uses it).' })),
-        h('div', { class: 'field' }, h('label', { text: s.kind === 'archive' ? 'Datahold location on the server' : 'Start in folder' }), input('root', { placeholder: s.kind === 'archive' ? '/mnt/pool/lab/archive' : '~', autocapitalize: 'off', spellcheck: 'false' })),
-        h('div', { style: 'display:flex;align-items:center;gap:10px;margin-top:4px' }, testBtn),
-        result,
-        s.kind === 'archive' ? keysField(s) : s.kind === 'sftp' ? readBackField(s) : relayField(s),
+        ...serverFields(s, render, { onRename: () => (list.querySelector('.server-item.on div div').textContent = s.name || s.host || 'New server') }),
+        s.temporary ? saveField(s, 'Unticked, it stays here until you quit Quartermaster.') : '',
         s.kind === 'archive' && s.id && (s.allow_keys || (draft.routes || []).some((r) => r.archive === s.id)) ? routesSection(s) : '',
         h('div', { style: 'margin-top:24px' }, h('button', { class: 'link', style: 'color:var(--bad)', text: 'Remove this server', onclick: () => { draft.servers = draft.servers.filter((x) => x !== s); current = draft.servers[0] ? keyOf(draft.servers[0]) : null; render(); } })),
       );
     }
     body.append(h('div', { class: 'settings' }, list, form));
-  }
-
-  // An SFTP server can't compute checksums, so copies to it are checked by size, unless uploads
-  // are read back and compared.
-  function readBackField(s) {
-    const box = h('input', { type: 'checkbox', checked: !!s.read_back, onchange: (e) => { s.read_back = e.target.checked; render(); } });
-    return h('div', { class: 'field', style: 'margin-top:18px' },
-      h('label', { class: 'check' }, box, h('span', { text: 'Check uploads by reading them back' })),
-      h('div', { class: 'hint', text: s.read_back
-        ? 'Each file copied to this server is read back and its checksum compared, as thoroughly as with the helper. Uploads take about twice as long.'
-        : 'An SFTP server can’t compute checksums, so copies are checked by size and date, and the Dock says “Size matches”. Turn this on for data that matters.' }));
-  }
-
-  // Whether a file server's transfers go straight to archives or through this computer.
-  function relayField(s) {
-    const box = h('input', { type: 'checkbox', checked: !!s.relay, onchange: (e) => { s.relay = e.target.checked; render(); } });
-    return h('div', { class: 'field', style: 'margin-top:18px' },
-      h('label', { class: 'check' }, box, h('span', { text: 'Send through this computer' })),
-      h('div', { class: 'hint', text: s.relay
-        ? 'Transfers between this server and dataholds pass through this computer, which must stay awake with the app open until they finish. Use this if the server can’t reach the datahold, or doesn’t let programs keep running after you log out.'
-        : 'Transfers run on this server and go straight to the datahold, so you can close the app while they run.' }));
-  }
-
-  // How file servers reach this archive: by signing in (the default) or with a limited key.
-  function keysField(s) {
-    const box = h('input', { type: 'checkbox', checked: !!s.allow_keys, onchange: (e) => { s.allow_keys = e.target.checked; render(); } });
-    return h('div', { class: 'field', style: 'margin-top:18px' },
-      h('label', { class: 'check' }, box, h('span', { text: 'Let file servers use a limited key for this datahold' })),
-      h('div', { class: 'hint', text: s.allow_keys
-        ? 'A file server gets a key that can only add and read data here, so its transfers never need a sign-in. This works only if the datahold’s server accepts SSH keys.'
-        : 'File servers sign in with your password (and Duo, if used) when a transfer starts, and keep that connection open while transfers run.' }));
   }
 
   // File servers with limited keys for this datahold, with a way to remove each.
@@ -2132,51 +2087,150 @@ function settingsDialog({ add = null } = {}) {
     return box;
   }
 
-  function showTest(s, info, result, testBtn) {
-    result.replaceChildren();
-    if (!info.connected) {
-      result.append(h('span', { class: 'bad-text', text: `✕ ${info.message || 'Couldn’t connect.'}` }));
-      return;
+  render();
+}
+
+// The fields describing a server, shared by Settings and the Add dialog. `kinds` limits the
+// types offered (the Type menu is left out when there's only one).
+function serverFields(s, render, { kinds = ['archive', 'files', 'sftp'], onRename = () => {} } = {}) {
+  const input = (key, attrs = {}) => h('input', { value: s[key] ?? '', ...attrs, oninput: (e) => { s[key] = key === 'port' ? (Number(e.target.value) || null) : e.target.value; if (key === 'name' || key === 'host') onRename(); } });
+  const labels = { archive: 'Datahold (shown on the right)', files: 'File server, such as an analysis server (shown on the left)', sftp: 'SFTP server, without the helper (Transfer mode only)' };
+  const kind = h('select', { onchange: (e) => { s.kind = e.target.value; render(); } }, kinds.map((k) => h('option', { value: k, text: labels[k] })));
+  kind.value = s.kind;
+  const result = h('div', { class: 'status-line' });
+  const testBtn = h('button', { class: 'btn', text: 'Test connection' });
+  testBtn.onclick = async () => {
+    if (!s.host.trim()) { result.replaceChildren(h('span', { class: 'bad-text', text: 'Enter the server address first.' })); return; }
+    testBtn.disabled = true;
+    result.replaceChildren(h('div', { class: 'spinner', style: 'width:14px;height:14px' }), h('span', { text: 'Connecting… (answer any password or Duo prompt)' }));
+    const info = await call('test_server', { server: { ...s, id: s.id || 'new' } }).catch((e) => ({ connected: false, message: String(e) }));
+    testBtn.disabled = false;
+    showTest(s, info, result, testBtn);
+  };
+  return [
+    h('div', { class: 'field' }, h('label', { text: 'Display name' }), input('name', { placeholder: s.kind === 'archive' ? 'Lab datahold' : 'Analysis server' })),
+    kinds.length > 1 ? h('div', { class: 'field' }, h('label', { text: 'Type' }), kind) : '',
+    h('div', { class: 'grid2' },
+      h('div', { class: 'field' }, h('label', { text: 'Server address' }), input('host', { placeholder: 'server.example.edu', autocapitalize: 'off', spellcheck: 'false' }), h('div', { class: 'hint', text: 'A host name, or a name from your ~/.ssh/config.' })),
+      h('div', { class: 'field' }, h('label', { text: 'Port' }), input('port', { placeholder: '22', inputmode: 'numeric' }))),
+    h('div', { class: 'field' }, h('label', { text: 'Username' }), input('user', { placeholder: 'Leave blank to use your SSH settings', autocapitalize: 'off', spellcheck: 'false' }), h('div', { class: 'hint', text: 'Your SSH key is used if you have one; otherwise the app asks for your password (and Duo, if the server uses it).' })),
+    h('div', { class: 'field' }, h('label', { text: s.kind === 'archive' ? 'Datahold location on the server' : 'Start in folder' }), input('root', { placeholder: s.kind === 'archive' ? '/mnt/pool/lab/archive' : '~', autocapitalize: 'off', spellcheck: 'false' })),
+    h('div', { style: 'display:flex;align-items:center;gap:10px;margin-top:4px' }, testBtn),
+    result,
+    s.kind === 'archive' ? keysField(s, render) : s.kind === 'sftp' ? readBackField(s, render) : relayField(s, render),
+  ];
+}
+
+// Whether a server is kept in Settings, or only until the app quits.
+function saveField(s, hint) {
+  const box = h('input', { type: 'checkbox', checked: !s.temporary, onchange: (e) => (s.temporary = !e.target.checked) });
+  return h('div', { class: 'field', style: 'margin-top:18px' },
+    h('label', { class: 'check' }, box, h('span', { text: 'Save this server' })),
+    h('div', { class: 'hint', text: hint }));
+}
+
+// Add a server from a pane's location menu: just the server's details, then connect. It's saved
+// in Settings unless "Save this server" is unticked, which makes it a one-off connection.
+function addServerDialog(i, kinds) {
+  const s = { id: `s${Math.random().toString(16).slice(2, 14)}`, name: '', kind: kinds[0], host: '', port: null, user: '', root: kinds[0] === 'archive' ? '' : '~', temporary: false };
+  const body = h('div', { class: 'server-form', style: 'padding:0' });
+  const title = h('h2', {});
+  const m = modal([h('div', { class: 'dialog-body' }, title, body), h('div', { class: 'dialog-foot' },
+    h('button', { class: 'btn', text: 'Cancel', onclick: () => m.close() }),
+    h('button', { class: 'btn primary', text: 'Connect', onclick: connect }))], { onClose: () => renderPane(i) });
+  function render() {
+    title.textContent = s.kind === 'archive' ? 'Add a datahold' : s.kind === 'sftp' ? 'Add an SFTP server' : 'Add a file server';
+    body.replaceChildren(...serverFields(s, render, { kinds }),
+      saveField(s, 'Unticked, it’s a one-off connection: it stays in the menu until you quit Quartermaster.'));
+  }
+  async function connect() {
+    if (!s.host.trim()) return alertDialog('Add a server address', 'Enter an address, or a name from your ~/.ssh/config.');
+    if (s.kind === 'archive' && !s.root.trim()) return alertDialog('Add the datahold location', `Enter the folder on ${s.host} where the datahold lives.`);
+    try {
+      S.settings = await call('settings_save', { settings: { ...S.settings, servers: [...S.settings.servers, s] } });
+    } catch (e) {
+      return alertDialog('Couldn’t add the server', String(e));
     }
-    const parts = ['Connected', info.os, info.helper, info.free_bytes != null ? `${fmtBytes(info.free_bytes)} free` : null].filter(Boolean);
-    if (!info.needs) {
-      result.append(h('span', { class: 'ok-text', text: `✓ ${parts.join(' · ')}` }));
-      return;
-    }
-    if (info.needs === 'helper' || info.needs === 'update') {
-      const btn = h('button', { class: 'btn', text: info.needs === 'update' ? 'Update helper' : 'Install helper' });
-      btn.onclick = async () => {
-        btn.disabled = true;
-        btn.textContent = 'Installing…';
-        try {
-          await call('install_helper', { server: s });
-          testBtn.click();
-        } catch (e) {
-          btn.disabled = false;
-          btn.textContent = 'Install helper';
-          result.append(h('div', { class: 'bad-text', text: String(e) }));
-        }
-      };
-      result.append(h('div', {}, h('div', { class: s.kind === 'archive' ? 'warn-text' : 'ok-text', text: `${s.kind === 'archive' ? '!' : '✓'} ${parts.join(' · ')}` }),
-        h('div', { style: 'margin:6px 0', text: info.needs === 'update' ? 'The Quartermaster helper on this server is out of date for this app.' : s.kind === 'archive' ? 'The Quartermaster helper isn’t installed on this server yet.' : 'The Quartermaster helper isn’t installed here yet. It will be needed for direct server-to-server transfers.' }), btn));
-      return;
-    }
-    if (info.needs === 'archive') {
-      const btn = h('button', { class: 'btn', text: 'Create a datahold here' });
-      btn.onclick = async () => {
-        btn.disabled = true;
-        try {
-          await call('create_archive', { server: s });
-          testBtn.click();
-        } catch (e) {
-          btn.disabled = false;
-          result.append(h('div', { class: 'bad-text', text: String(e) }));
-        }
-      };
-      result.append(h('div', {}, h('div', { class: 'ok-text', text: `✓ ${parts.join(' · ')}` }), h('div', { style: 'margin:6px 0', text: `There’s no datahold at ${s.root} yet.` }), btn));
-    }
+    m.close();
+    openLocation(i, s.id);
   }
   render();
+}
+
+// An SFTP server can't compute checksums, so copies to it are checked by size, unless uploads
+// are read back and compared.
+function readBackField(s, render) {
+  const box = h('input', { type: 'checkbox', checked: !!s.read_back, onchange: (e) => { s.read_back = e.target.checked; render(); } });
+  return h('div', { class: 'field', style: 'margin-top:18px' },
+    h('label', { class: 'check' }, box, h('span', { text: 'Check uploads by reading them back' })),
+    h('div', { class: 'hint', text: s.read_back
+      ? 'Each file copied to this server is read back and its checksum compared, as thoroughly as with the helper. Uploads take about twice as long.'
+      : 'An SFTP server can’t compute checksums, so copies are checked by size and date, and the Dock says “Size matches”. Turn this on for data that matters.' }));
+}
+
+// Whether a file server's transfers go straight to archives or through this computer.
+function relayField(s, render) {
+  const box = h('input', { type: 'checkbox', checked: !!s.relay, onchange: (e) => { s.relay = e.target.checked; render(); } });
+  return h('div', { class: 'field', style: 'margin-top:18px' },
+    h('label', { class: 'check' }, box, h('span', { text: 'Send through this computer' })),
+    h('div', { class: 'hint', text: s.relay
+      ? 'Transfers between this server and dataholds pass through this computer, which must stay awake with the app open until they finish. Use this if the server can’t reach the datahold, or doesn’t let programs keep running after you log out.'
+      : 'Transfers run on this server and go straight to the datahold, so you can close the app while they run.' }));
+}
+
+// How file servers reach this archive: by signing in (the default) or with a limited key.
+function keysField(s, render) {
+  const box = h('input', { type: 'checkbox', checked: !!s.allow_keys, onchange: (e) => { s.allow_keys = e.target.checked; render(); } });
+  return h('div', { class: 'field', style: 'margin-top:18px' },
+    h('label', { class: 'check' }, box, h('span', { text: 'Let file servers use a limited key for this datahold' })),
+    h('div', { class: 'hint', text: s.allow_keys
+      ? 'A file server gets a key that can only add and read data here, so its transfers never need a sign-in. This works only if the datahold’s server accepts SSH keys.'
+      : 'File servers sign in with your password (and Duo, if used) when a transfer starts, and keep that connection open while transfers run.' }));
+}
+
+function showTest(s, info, result, testBtn) {
+  result.replaceChildren();
+  if (!info.connected) {
+    result.append(h('span', { class: 'bad-text', text: `✕ ${info.message || 'Couldn’t connect.'}` }));
+    return;
+  }
+  const parts = ['Connected', info.os, info.helper, info.free_bytes != null ? `${fmtBytes(info.free_bytes)} free` : null].filter(Boolean);
+  if (!info.needs) {
+    result.append(h('span', { class: 'ok-text', text: `✓ ${parts.join(' · ')}` }));
+    return;
+  }
+  if (info.needs === 'helper' || info.needs === 'update') {
+    const btn = h('button', { class: 'btn', text: info.needs === 'update' ? 'Update helper' : 'Install helper' });
+    btn.onclick = async () => {
+      btn.disabled = true;
+      btn.textContent = 'Installing…';
+      try {
+        await call('install_helper', { server: s });
+        testBtn.click();
+      } catch (e) {
+        btn.disabled = false;
+        btn.textContent = 'Install helper';
+        result.append(h('div', { class: 'bad-text', text: String(e) }));
+      }
+    };
+    result.append(h('div', {}, h('div', { class: s.kind === 'archive' ? 'warn-text' : 'ok-text', text: `${s.kind === 'archive' ? '!' : '✓'} ${parts.join(' · ')}` }),
+      h('div', { style: 'margin:6px 0', text: info.needs === 'update' ? 'The Quartermaster helper on this server is out of date for this app.' : s.kind === 'archive' ? 'The Quartermaster helper isn’t installed on this server yet.' : 'The Quartermaster helper isn’t installed here yet. It will be needed for direct server-to-server transfers.' }), btn));
+    return;
+  }
+  if (info.needs === 'archive') {
+    const btn = h('button', { class: 'btn', text: 'Create a datahold here' });
+    btn.onclick = async () => {
+      btn.disabled = true;
+      try {
+        await call('create_archive', { server: s });
+        testBtn.click();
+      } catch (e) {
+        btn.disabled = false;
+        result.append(h('div', { class: 'bad-text', text: String(e) }));
+      }
+    };
+    result.append(h('div', {}, h('div', { class: 'ok-text', text: `✓ ${parts.join(' · ')}` }), h('div', { style: 'margin:6px 0', text: `There’s no datahold at ${s.root} yet.` }), btn));
+  }
 }
 
 // Which locations each pane may show in each mode.

@@ -45,6 +45,9 @@ pub struct Server {
     /// SFTP servers only: read each upload back and compare checksums (slower, but checked).
     #[serde(default)]
     pub read_back: bool,
+    /// A one-off connection: usable until the app quits, but never written to the settings file.
+    #[serde(default)]
+    pub temporary: bool,
 }
 
 impl Server {
@@ -101,10 +104,48 @@ pub fn load(path: &Path) -> Settings {
     fs::read(path).ok().and_then(|b| serde_json::from_slice(&b).ok()).unwrap_or_default()
 }
 
+/// Write the settings, leaving out temporary servers (and keys set up for them).
 pub fn save(path: &Path, s: &Settings) -> anyhow::Result<()> {
     if let Some(dir) = path.parent() {
         fs::create_dir_all(dir)?;
     }
-    archive_core::util::atomic_write(path, &serde_json::to_vec_pretty(s)?)?;
+    let mut kept = s.clone();
+    kept.servers.retain(|x| !x.temporary);
+    let saved = |id: &str| kept.servers.iter().any(|x| x.id == id);
+    let routes = kept.routes.iter().filter(|r| saved(&r.files) && saved(&r.archive)).cloned().collect();
+    kept.routes = routes;
+    archive_core::util::atomic_write(path, &serde_json::to_vec_pretty(&kept)?)?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn temporary_servers_are_never_written() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        let server = |id: &str, temporary| Server {
+            id: id.into(),
+            name: id.into(),
+            kind: ServerKind::Files,
+            host: format!("{id}.example.edu"),
+            port: None,
+            user: None,
+            root: "~".into(),
+            allow_keys: false,
+            relay: false,
+            read_back: false,
+            temporary,
+        };
+        let mut s = Settings::default();
+        s.servers = vec![server("kept", false), server("once", true)];
+        s.routes = vec![Route { files: "once".into(), archive: "kept".into() }];
+        save(&path, &s).unwrap();
+        let back = load(&path);
+        assert_eq!(back.servers.iter().map(|x| x.id.as_str()).collect::<Vec<_>>(), ["kept"]);
+        assert!(back.routes.is_empty(), "a key for a temporary server isn't kept either");
+        assert!(!fs::read_to_string(&path).unwrap().contains("once"));
+    }
 }
