@@ -93,6 +93,9 @@ fn parts_of_a_folder_become_one_project() {
                 if e.is_file() {
                     fs::create_dir_all(dir.join(rel).parent().unwrap()).unwrap();
                     fs::copy(&e, dir.join(rel)).unwrap();
+                    // fs::copy keeps dates on a Mac but not on Linux.
+                    let mtime = filetime::FileTime::from_last_modification_time(&fs::metadata(&e).unwrap());
+                    filetime::set_file_mtime(dir.join(rel), mtime).unwrap();
                 }
             }
         }
