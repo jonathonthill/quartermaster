@@ -131,8 +131,9 @@ fn purging_a_project_frees_its_packs_and_nothing_else() {
     // Files inside a project can't be trashed on their own; the project can.
     assert!(store.trash(&VPath::parse("/proj/raw/b_copy.fastq").unwrap()).is_err());
     store.trash(&VPath::parse("/proj").unwrap()).unwrap();
-    let r = maint::purge(&mut store, Some(0)).unwrap();
-    assert_eq!(r.purged_items, 0, "items trashed this second aren't older than 0 days yet");
+    let r = maint::purge(&mut store, Some(1)).unwrap();
+    assert_eq!(r.purged_items, 0, "items trashed just now aren't a day old yet");
+    // Older than 0 days: anything trashed before this second (so wait one out).
     std::thread::sleep(std::time::Duration::from_millis(1100));
     let r = maint::purge(&mut store, Some(0)).unwrap();
     assert_eq!(r.purged_items, 1);
