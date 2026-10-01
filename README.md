@@ -45,6 +45,42 @@ Getting data there is just as careful:
 - **Undo a mistake.** *Abandon ship* (the skull) stops a transfer and removes only what it created.
 - **Your usual sign-in.** The app uses your computer's own `ssh`, so your `~/.ssh/config`, keys, passwords, and two-factor sign-in (Duo, authenticator codes, and the like) all work, with the prompts shown in the app.
 
+## Getting started
+
+1. **Download** the app from [Releases](https://github.com/jonathonthill/quartermaster/releases). The builds aren't signed yet, so the first launch needs one extra step:
+   - **macOS**: drag Quartermaster to Applications, then right-click it and choose **Open**, and **Open** again. If macOS says the app "is damaged", run `xattr -dr com.apple.quarantine /Applications/Quartermaster.app` in Terminal.
+   - **Windows**: if SmartScreen appears, choose **More info**, then **Run anyway**. (Windows builds are newer and less tested.)
+   - **Linux**: use the `.AppImage` (make it executable) or the `.deb`.
+2. **Add your datahold.** In the right pane's menu, choose **Add a datahold…**. Enter the storage server's address and the folder for the archive, then press **Connect**. If there's no datahold there yet, **Test connection** offers to create one.
+3. **Let it install its helper**, if asked. A small program goes into your home folder on the server; nothing needs an administrator.
+
+## Stowing a project
+
+1. Make sure the top bar says **Stow**. The left pane is this computer or a file server, and the right pane is your datahold.
+2. On the right, open the folder the project should go in (for example `Projects`). To add files to an existing barrel, open that barrel instead.
+3. On the left, find the project's folder and select it. To stow from an analysis server, choose it in the left pane's menu (or **Add a file server…**).
+4. Press **→** (or drag the folder across). Quartermaster shows what will be stowed and where.
+5. Choose **Copy** to keep the originals, or **Move** to delete them once everything is archived and verified, then confirm.
+
+<p align="center"><img src="docs/images/stow-confirm.png" width="760" alt="Stowing the Research folder: a confirmation shows 18,412 files, 600 GB, going to Projects as a new barrel, with Copy or Move"></p>
+
+The transfer appears in the **Dock** along the bottom; click it to see each transfer. Pause or
+play any of them, or press the skull (**Abandon ship**) to stop one and undo it. A paused
+transfer continues where it stopped, even after quitting the app.
+
+<p align="center"><img src="docs/images/stow-dock.png" width="760" alt="The Dock open at the bottom, showing Copying Research to Projects at 18 percent, with pause and abandon buttons"></p>
+
+## Retrieving files
+
+1. On the right, open the barrel and find what you need. Use the search button to search the whole datahold.
+2. On the left, open the folder to put it in.
+3. Select any files or folders on the right and press **←**. Retrieving is always a copy: the datahold keeps everything.
+
+<p align="center"><img src="docs/images/retrieve.png" width="760" alt="Inside the sealed barrel Dairy_microbiome, the analysis folder is selected, ready to retrieve to this computer with the left arrow"></p>
+
+Each retrieved file is checked against the checksum recorded when it was stowed, so you know
+it's exactly what went in.
+
 ## Also: everyday transfers
 
 The same careful copying works for ordinary files too. Switch the top bar from **Stow** to
@@ -62,15 +98,13 @@ with fewer settings to get wrong. It also does several things FileZilla doesn't:
 Servers you can't install anything on can be added as **SFTP servers**. Plain FTP isn't
 supported, since it sends passwords unencrypted.
 
-## Getting started
+To copy between machines:
 
-1. **Download** the app from [Releases](https://github.com/jonathonthill/quartermaster/releases). The builds aren't signed yet, so the first launch needs one extra step:
-   - **macOS**: drag Quartermaster to Applications, then right-click it and choose **Open**, and **Open** again. If macOS says the app "is damaged", run `xattr -dr com.apple.quarantine /Applications/Quartermaster.app` in Terminal.
-   - **Windows**: if SmartScreen appears, choose **More info**, then **Run anyway**. (Windows builds are newer and less tested.)
-   - **Linux**: use the `.AppImage` (make it executable) or the `.deb`.
-2. **Add your datahold.** In the right pane's menu, choose **Add a datahold…**. Enter the storage server's address and the folder for the archive, then press **Connect**. If there's no datahold there yet, **Test connection** offers to create one.
-3. **Let it install its helper**, if asked. A small program goes into your home folder on the server; nothing needs an administrator.
-4. **Stow a project.** On the left, open the folder holding it (on this computer, or an analysis server added with **Add a file server…**). Select it and press **→**. Choose **Copy** or **Move**, and watch it in the **Dock** along the bottom.
+1. Switch the top bar to **Transfer**.
+2. Choose a place in each pane's menu: this computer, a file server, or an SFTP server.
+3. Select files or folders and press **→** or **←** (or drag them across), choose **Copy** or **Move**, and confirm. Keep the app open until the transfer finishes.
+
+<p align="center"><img src="docs/images/transfer.png" width="760" alt="Transfer mode: copying the Desktop folder from this computer to the lab-compute server, with Copy or Move"></p>
 
 ## Words you'll see
 

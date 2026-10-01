@@ -47,9 +47,9 @@ const mockSettings = {
 };
 
 const localTree = {
-  '/Users/jhill': [['Research', 'dir'], ['Desktop', 'dir'], ['Documents', 'dir'], ['notes.txt', 'file', 4200]],
-  '/Users/jhill/Research': [['2024_sequencing', 'dir'], ['locked_data', 'dir'], ['grant_2025.pdf', 'file', 2_100_000]],
-  '/Users/jhill/Research/2024_sequencing': [
+  '/Users/alex': [['Research', 'dir'], ['Desktop', 'dir'], ['Documents', 'dir'], ['notes.txt', 'file', 4200]],
+  '/Users/alex/Research': [['2024_sequencing', 'dir'], ['locked_data', 'dir'], ['grant_2025.pdf', 'file', 2_100_000]],
+  '/Users/alex/Research/2024_sequencing': [
     ['raw_reads', 'dir'], ['aligned', 'dir'], ['analysis', 'dir'],
     ['sample_sheet.csv', 'file', 12_000], ['run_summary.pdf', 'file', 2_100_000],
   ],
@@ -58,11 +58,11 @@ const localTree = {
 const archiveTree = {
   '/': [['Projects', 'dir', 3_456_000_000_000, 51_800]],
   '/Projects': [
-    ['Charity_Dairy', 'dir', 1_900_000_000_000, 41_206], ['Caroline_Oswald', 'dir', 840_000_000_000, 6_100],
-    ['Kaitlyn_Robinson', 'dir', 620_000_000_000, 4_390], ['methylation_pilot', 'dir', 96_000_000_000, 104],
+    ['Dairy_microbiome', 'dir', 1_900_000_000_000, 41_206], ['Zebrafish_imaging', 'dir', 840_000_000_000, 6_100],
+    ['Soil_metagenomes', 'dir', 620_000_000_000, 4_390], ['methylation_pilot', 'dir', 96_000_000_000, 104],
     ['README.txt', 'file', 4_000, 1],
   ],
-  '/Projects/Charity_Dairy': [
+  '/Projects/Dairy_microbiome': [
     ['raw_reads', 'dir', 1_600_000_000_000, 38_000], ['analysis', 'dir', 290_000_000_000, 3_200],
     ['sample_sheet.csv', 'file', 14_000, 1],
   ],
@@ -99,7 +99,7 @@ function mockControl(id, what) {
 
 function mockList(tree, path, sep, archive) {
   // Like the real listings: ~ is the home folder, a trailing / is ignored, and unknown folders fail.
-  path = path.replace(/^~(?=\/|$)/, '/Users/jhill');
+  path = path.replace(/^~(?=\/|$)/, '/Users/alex');
   const segs = [];
   for (const seg of path.split('/')) seg === '..' ? segs.pop() : seg && seg !== '.' && segs.push(seg);
   path = '/' + segs.join('/');
@@ -120,7 +120,7 @@ function mockList(tree, path, sep, archive) {
   const parts = path.split('/').filter(Boolean);
   const crumbs = archive
     ? [{ name: 'Lab datahold', path: '/' }, ...parts.map((p, i) => ({ name: p, path: '/' + parts.slice(0, i + 1).join('/') }))]
-    : [{ name: 'Home', path: '/Users/jhill' }, ...parts.slice(2).map((p, i) => ({ name: p, path: '/' + parts.slice(0, i + 3).join('/') }))];
+    : [{ name: 'Home', path: '/Users/alex' }, ...parts.slice(2).map((p, i) => ({ name: p, path: '/' + parts.slice(0, i + 3).join('/') }))];
   const parent = path === '/' ? null : path.replace(/\/[^/]*$/, '') || '/';
   const project = archive && parts[0] === 'Projects' && parts.length >= 2 ? `/Projects/${parts[1]}` : null;
   return { path, parent, crumbs, items, project, free_bytes: archive ? 7_200_000_000_000 : 412_000_000_000 };
@@ -128,7 +128,8 @@ function mockList(tree, path, sep, archive) {
 
 let jobId = 1;
 // A server job paused because its sign-in closed, to preview that row.
-const jobs = [{ id: 'R:hc:1', title: 'Moving run_demo → Projects (on lab-compute)', direction: 'send', state: 'waiting', done: 88_000_000, total: 210_000_000, current: '', message: 'Paused: the connection to storage.example.edu closed. Sign in again in the Archive app and this transfer continues where it stopped.', problems: [], rate: 0, server: 'lab-compute', archive: 'Lab datahold', link: { host: 'storage.example.edu', port: null, user: 'alex' } }];
+// ?nojobs starts with an empty Dock (for screenshots).
+const jobs = new URLSearchParams(location.search).has('nojobs') ? [] : [{ id: 'R:hc:1', title: 'Moving run_demo → Projects (on lab-compute)', direction: 'send', state: 'waiting', done: 88_000_000, total: 210_000_000, current: '', message: 'Paused: the connection to storage.example.edu closed. Sign in again in the Archive app and this transfer continues where it stopped.', problems: [], rate: 0, server: 'lab-compute', archive: 'Lab datahold', link: { host: 'storage.example.edu', port: null, user: 'alex' } }];
 let promptId = 100;
 const answers = {};
 // Show a sign-in question as the real backend would, and wait for the answer.
@@ -146,8 +147,8 @@ async function mock(cmd, a) {
     case 'settings_get': return structuredClone(mockSettings);
     case 'settings_save': Object.assign(mockSettings, a.settings); return mockSettings;
     case 'places_server': return [{ name: 'Home', path: '/home/alex' }, { name: 'storage', path: '/media/storage' }];
-    case 'places': return [{ name: 'Home', path: '/Users/jhill' }, { name: 'Desktop', path: '/Users/jhill/Desktop' }, { name: 'Box', path: '/Users/jhill/Library/CloudStorage/Box-Box' }, { name: 'BigData', path: '/Volumes/BigData' }];
-    case 'list_local': return mockList(localTree, a.path || '/Users/jhill', '/', false);
+    case 'places': return [{ name: 'Home', path: '/Users/alex' }, { name: 'Desktop', path: '/Users/alex/Desktop' }, { name: 'Box', path: '/Users/alex/Library/CloudStorage/Box-Box' }, { name: 'BigData', path: '/Volumes/BigData' }];
+    case 'list_local': return mockList(localTree, a.path || '/Users/alex', '/', false);
     case 'list_archive': return mockList(archiveTree, a.path || '/', '/', true);
     case 'connect':
       if (a.serverId === 'rc') {
@@ -159,7 +160,7 @@ async function mock(cmd, a) {
     case 'test_server': return { kind: a.server.kind, connected: true, needs: null, helper: 'archive-helper 0.1.0 (protocol 1, freebsd-x86_64)', os: 'freebsd', free_bytes: 7_200_000_000_000 };
     case 'archive_info':
       return { path: a.path, kind: 'dir', files: 41206, folders: 318, original_bytes: 1_900_000_000_000, stored_bytes: 1_210_000_000_000, duplicate_bytes: 212_000_000_000, archived_at: now - 7 * day, protection: 'protected', last_checked: now - 23 * day };
-    case 'archive_search': return [{ folder: '/Projects/Charity_Dairy', item: { name: 'sample_' + a.query + '.fastq.gz', path: '/Projects/Charity_Dairy/sample.fastq.gz', kind: 'file', size: 3_200_000_000, mtime: now - 400 * day, archived: now - 7 * day } }];
+    case 'archive_search': return [{ folder: '/Projects/Dairy_microbiome', item: { name: 'sample_' + a.query + '.fastq.gz', path: '/Projects/Dairy_microbiome/sample.fastq.gz', kind: 'file', size: 3_200_000_000, mtime: now - 400 * day, archived: now - 7 * day } }];
     case 'search_local':
       return {
         hits: [
@@ -174,7 +175,7 @@ async function mock(cmd, a) {
       };
     case 'search_cancel': return null;
     case 'list_server': {
-      const l = mockList(localTree, a.path || '/Users/jhill/Research', '/', false);
+      const l = mockList(localTree, a.path || '/Users/alex/Research', '/', false);
       return { ...l, crumbs: l.crumbs.map((c) => (c.name === 'Home' ? { ...c, name: 'alex' } : c)) };
     }
     case 'search_server': return mock('search_local', a);
@@ -261,7 +262,11 @@ async function mock(cmd, a) {
         emit('transfer', { ...copyJob });
         return String(id);
       }
-      const job = { id: String(id), title: 'Moving raw_reads → Projects', direction: a.req.direction, state: 'running', done: 0, total: 412_000_000_000, current: 'reads_001.fastq.gz', message: 'Transferring', problems: [], rate: 38_000_000, server: a.req.files_id ? (a.req.files_id === 'rc' ? 'Campus cluster' : 'lab-compute') : null, relay: !!a.req.relay, sources: a.req.sources, place: a.req.files_id || '', created: a.req.direction === 'send' ? a.req.sources.map((s) => `${a.req.dest.replace(/\/$/, '')}/${s.split('/').pop()}`) : [] };
+      // Titled the way the app titles them (jobs.rs `title`).
+      const what = a.req.sources[0].split('/').pop() + (a.req.sources.length > 1 ? ` and ${a.req.sources.length - 1} more` : '');
+      const dest = a.req.dest.split('/').filter(Boolean).pop() || 'Home';
+      const verb = a.req.direction === 'send' ? (a.req.mode === 'move' ? 'Moving' : 'Copying') : 'Retrieving';
+      const job = { id: String(id), title: `${verb} ${what} → ${dest}`, direction: a.req.direction, state: 'running', done: 0, total: 412_000_000_000, current: 'reads_001.fastq.gz', message: 'Transferring', problems: [], rate: 38_000_000, server: a.req.files_id ? (a.req.files_id === 'rc' ? 'Campus cluster' : 'lab-compute') : null, relay: !!a.req.relay, sources: a.req.sources, place: a.req.files_id || '', created: a.req.direction === 'send' ? a.req.sources.map((s) => `${a.req.dest.replace(/\/$/, '')}/${s.split('/').pop()}`) : [] };
       jobs.push(job);
       tick(job);
       emit('transfer', { ...job });
