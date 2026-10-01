@@ -1,4 +1,4 @@
-//! Showing ssh's password, passphrase, Duo, and host-key prompts in the app.
+//! Showing ssh's password, passphrase, two-factor (2FA), and host-key prompts in the app.
 //!
 //! The app starts ssh with `SSH_ASKPASS` pointing at its own executable. For
 //! each prompt, ssh runs that executable with the prompt text; in that mode it

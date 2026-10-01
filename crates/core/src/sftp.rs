@@ -1,6 +1,6 @@
 //! SFTP servers: machines that offer only SFTP (no `archive-helper`). The app speaks SFTP version 3
 //! itself, over the system `ssh` (`ssh -s host sftp`), so sign-in works exactly as for other servers:
-//! `~/.ssh/config`, shared connections, and password or Duo questions in the app.
+//! `~/.ssh/config`, shared connections, and password or two-factor questions in the app.
 //!
 //! An SFTP server can't compute checksums, so a copy to or from one is checked by size and date
 //! (and, if the server's "read back" setting is on, by reading uploads back and comparing their

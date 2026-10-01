@@ -128,7 +128,7 @@ the `interrupted` state. The server doesn't restart relayed jobs itself
 A signed-in link is the file server's own SSH connection to the archive
 server, kept open so jobs need no sign-in of their own. `SignIn{target}` opens
 it. While ssh signs in, the helper sends each of its questions to the client as
-`Prompt{id, text}`, such as a password, a Duo choice, or a yes/no about an unknown
+`Prompt{id, text}`, such as a password, a two-factor code or choice, or a yes/no about an unknown
 host. The client answers each one with `PromptAnswer{id, answer}`, where a null
 answer cancels the sign-in. The exchange ends with `Ok` or an error. Behind
 this, the helper runs `ssh -f -N` as a ControlMaster with a private socket and

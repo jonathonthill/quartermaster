@@ -1,5 +1,5 @@
 //! Signed-in links: a file server's own SSH connection to an archive server,
-//! opened with the user's sign-in (password, Duo, and so on) and kept open so
+//! opened with the user's sign-in (password, two-factor code, and so on) and kept open so
 //! transfer jobs on the file server reach the archive directly. This works
 //! whatever sign-in the archive server requires, including servers that don't
 //! accept SSH keys.
@@ -171,7 +171,7 @@ struct Answer {
 }
 
 /// Sign in to `t` from this server, unless the link is already open. Each
-/// question ssh asks (password, Duo, an unknown host key) goes to `ask`;
+/// question ssh asks (password, two-factor code, an unknown host key) goes to `ask`;
 /// `None` cancels. `askpass` is this helper's executable.
 #[cfg(unix)]
 pub fn open(t: &LinkTarget, askpass: &Path, ask: &mut dyn FnMut(&str) -> Option<String>) -> Result<()> {

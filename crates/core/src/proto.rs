@@ -474,7 +474,7 @@ pub enum Response {
     Measure(Measure),
     Jobs(Vec<JobStatus>),
     Keys(Vec<AuthorizedKey>),
-    /// A question from a sign-in in progress (a password, a Duo choice, or a
+    /// A question from a sign-in in progress (a password, a two-factor code or choice, or a
     /// yes/no about an unknown host), to show the user.
     Prompt {
         id: u64,

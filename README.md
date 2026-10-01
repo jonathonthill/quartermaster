@@ -43,7 +43,7 @@ Getting data there is just as careful:
 - **Straight from the analysis server.** Projects on an analysis server go directly to the datahold, server to server, so you can close your laptop while they move.
 - **Interruptions don't matter.** Pause, lose the connection, or restart: a transfer continues where it stopped.
 - **Undo a mistake.** *Abandon ship* (the skull) stops a transfer and removes only what it created.
-- **Your usual sign-in.** The app uses your computer's own `ssh`, so your `~/.ssh/config`, keys, passwords, and Duo all work, with the prompts shown in the app.
+- **Your usual sign-in.** The app uses your computer's own `ssh`, so your `~/.ssh/config`, keys, passwords, and two-factor sign-in (Duo, authenticator codes, and the like) all work, with the prompts shown in the app.
 
 ## Also: everyday transfers
 
@@ -56,7 +56,7 @@ with fewer settings to get wrong. It also does several things FileZilla doesn't:
 - **Move is safe.** Originals are deleted only after the whole transfer has arrived and been verified.
 - **Mistakes can be undone.** *Abandon ship* removes what a transfer created, and deleting sends things to a Trash, even on servers.
 - **Partial files stay out of the way.** An interrupted copy waits under a hidden name and picks up where it stopped, rather than leaving a half-written file behind.
-- **One sign-in, done your way.** It uses your own `ssh`, so aliases in `~/.ssh/config`, keys, jump hosts, passwords, and Duo just work, and one sign-in covers every window and transfer to that server.
+- **One sign-in, done your way.** It uses your own `ssh`, so aliases in `~/.ssh/config`, keys, jump hosts, passwords, and two-factor codes just work, and one sign-in covers every window and transfer to that server.
 - **Fast to get around.** Type a path with Tab completion, search a whole folder tree on the server, jump to Places, and open several windows.
 
 Servers you can't install anything on can be added as **SFTP servers**. Plain FTP isn't

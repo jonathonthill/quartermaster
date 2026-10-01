@@ -1,7 +1,7 @@
 //! Connections to servers through the system `ssh`.
 //!
 //! Every ssh the app starts for a server shares one authenticated connection
-//! (ssh "control master"), so a password or Duo prompt is answered once, and
+//! (ssh "control master"), so a password or two-factor prompt is answered once, and
 //! browsing and transfers can run side by side. Prompts appear in the app via
 //! the askpass bridge.
 

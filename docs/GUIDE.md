@@ -18,7 +18,7 @@ passes through this computer. Move deletes the originals only once every file
 has arrived and been verified, so stopping or abandoning it (the skull) before
 then undoes it completely, as in Stow. Stow and Transfer keep their own panes
 and share the Dock. The app uses the system `ssh`, so hosts and aliases in
-`~/.ssh/config`, keys, and known hosts all apply. Password, Duo, and new-host
+`~/.ssh/config`, keys, and known hosts all apply. Password, two-factor (2FA), and new-host
 prompts appear in the app. The left pane shows this computer or a file server,
 and the right pane an archive: → sends to the archive (you choose Copy or Move
 in the confirmation), ← retrieves from it (always a copy). To type a folder
@@ -105,7 +105,7 @@ the background.
 Transfers between a file server and an archive run on the file server, so
 the data goes directly between the two servers and you can close the app.
 When you start one, the file server signs in to the archive server itself,
-and its password or Duo prompt appears in the app. The file server keeps that
+and its password or two-factor prompt appears in the app. The file server keeps that
 connection open while its transfers run, and for two hours afterward. If the
 connection closes, for example because the server restarted, the transfer
 pauses. Its row in the Dock then offers **Sign in**, and the transfer

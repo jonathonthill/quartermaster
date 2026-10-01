@@ -461,7 +461,7 @@ function renderPane(i) {
     return;
   }
   if (p.status === 'connecting') {
-    root.append(empty(`Connecting to ${serverById(p.loc)?.name}…`, 'If the server asks for a password or Duo, a window will appear.', null, true));
+    root.append(empty(`Connecting to ${serverById(p.loc)?.name}…`, 'If the server asks for a password or a two-factor code, a window will appear.', null, true));
     updateXferButtons();
     return;
   }
@@ -1932,7 +1932,7 @@ function problemsDialog(j) {
     h('div', { class: 'dialog-foot' }, h('button', { class: 'btn primary', text: 'Close', onclick: () => m.close() }))], { wide: false });
 }
 
-// Password, Duo, and host-key prompts from ssh. One at a time.
+// Password, two-factor (2FA), and host-key prompts from ssh. One at a time.
 const prompts = [];
 let promptOpen = false;
 function onPrompt(pr) {
@@ -2102,7 +2102,7 @@ function serverFields(s, render, { kinds = ['archive', 'files', 'sftp'], onRenam
   testBtn.onclick = async () => {
     if (!s.host.trim()) { result.replaceChildren(h('span', { class: 'bad-text', text: 'Enter the server address first.' })); return; }
     testBtn.disabled = true;
-    result.replaceChildren(h('div', { class: 'spinner', style: 'width:14px;height:14px' }), h('span', { text: 'Connecting… (answer any password or Duo prompt)' }));
+    result.replaceChildren(h('div', { class: 'spinner', style: 'width:14px;height:14px' }), h('span', { text: 'Connecting… (answer any password or two-factor prompt)' }));
     const info = await call('test_server', { server: { ...s, id: s.id || 'new' } }).catch((e) => ({ connected: false, message: String(e) }));
     testBtn.disabled = false;
     showTest(s, info, result, testBtn);
@@ -2113,7 +2113,7 @@ function serverFields(s, render, { kinds = ['archive', 'files', 'sftp'], onRenam
     h('div', { class: 'grid2' },
       h('div', { class: 'field' }, h('label', { text: 'Server address' }), input('host', { placeholder: 'server.example.edu', autocapitalize: 'off', spellcheck: 'false' }), h('div', { class: 'hint', text: 'A host name, or a name from your ~/.ssh/config.' })),
       h('div', { class: 'field' }, h('label', { text: 'Port' }), input('port', { placeholder: '22', inputmode: 'numeric' }))),
-    h('div', { class: 'field' }, h('label', { text: 'Username' }), input('user', { placeholder: 'Leave blank to use your SSH settings', autocapitalize: 'off', spellcheck: 'false' }), h('div', { class: 'hint', text: 'Your SSH key is used if you have one; otherwise the app asks for your password (and Duo, if the server uses it).' })),
+    h('div', { class: 'field' }, h('label', { text: 'Username' }), input('user', { placeholder: 'Leave blank to use your SSH settings', autocapitalize: 'off', spellcheck: 'false' }), h('div', { class: 'hint', text: 'Your SSH key is used if you have one; otherwise the app asks for your password (and a two-factor code, if the server uses one).' })),
     h('div', { class: 'field' }, h('label', { text: s.kind === 'archive' ? 'Datahold location on the server' : 'Start in folder' }), input('root', { placeholder: s.kind === 'archive' ? '/mnt/pool/lab/archive' : '~', autocapitalize: 'off', spellcheck: 'false' })),
     h('div', { style: 'display:flex;align-items:center;gap:10px;margin-top:4px' }, testBtn),
     result,
@@ -2185,7 +2185,7 @@ function keysField(s, render) {
     h('label', { class: 'check' }, box, h('span', { text: 'Let file servers use a limited key for this datahold' })),
     h('div', { class: 'hint', text: s.allow_keys
       ? 'A file server gets a key that can only add and read data here, so its transfers never need a sign-in. This works only if the datahold’s server accepts SSH keys.'
-      : 'File servers sign in with your password (and Duo, if used) when a transfer starts, and keep that connection open while transfers run.' }));
+      : 'File servers sign in with your password (and two-factor code, if used) when a transfer starts, and keep that connection open while transfers run.' }));
 }
 
 function showTest(s, info, result, testBtn) {
