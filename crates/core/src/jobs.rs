@@ -17,7 +17,7 @@
 //! stdin and stdout to an archive session of its own. Only that computer can
 //! (re)start such a job, so the server never restarts one by itself.
 
-use std::fs::{self, OpenOptions};
+use std::fs::{self, File, OpenOptions};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -153,12 +153,34 @@ fn read_status(dir: &Path) -> Option<JobStatus> {
     serde_json::from_slice(&fs::read(dir.join("status.json")).ok()?).ok()
 }
 
-/// Is the job's process alive? (Its lock is held while it runs.)
+/// Is the job's process alive? (Its lock is held while it runs.) A lock that frees up within
+/// a second counts as free: see `lock_settled`.
 fn running(dir: &Path) -> bool {
+    match OpenOptions::new().write(true).open(dir.join("lock")) {
+        Ok(f) => !lock_settled(&f).unwrap_or(false),
+        Err(_) => false,
+    }
+}
+
+/// Like `running`, but without waiting, for status lists.
+fn running_now(dir: &Path) -> bool {
     match OpenOptions::new().write(true).open(dir.join("lock")) {
         Ok(f) => !util::try_lock(&f).unwrap_or(true),
         Err(_) => false,
     }
+}
+
+/// Take a job's lock, waiting up to a second for it. A program starting up at that moment
+/// (the background worker, say) briefly holds a copy of every open file, including the lock
+/// of a run that just ended, so an immediate check can wrongly see it as still running.
+fn lock_settled(f: &File) -> std::io::Result<bool> {
+    for _ in 0..50 {
+        if util::try_lock(f)? {
+            return Ok(true);
+        }
+        std::thread::sleep(std::time::Duration::from_millis(20));
+    }
+    Ok(false)
 }
 
 /// Record a new job. Start it with `run` (the helper does so in the background).
@@ -313,7 +335,7 @@ pub fn list_in(base: &Path) -> Vec<JobStatus> {
             let _ = fs::remove_dir_all(&dir);
             continue;
         }
-        if matches!(st.state.as_str(), "running" | "queued" | "waiting") && !running(&dir) && now_secs() - st.updated > 15 {
+        if matches!(st.state.as_str(), "running" | "queued" | "waiting") && !running_now(&dir) && now_secs() - st.updated > 15 {
             st.state = "interrupted".into();
             st.message =
                 "Stopped before it finished (the server may have restarted). Start it again to continue; finished files are kept.".into();
@@ -394,7 +416,7 @@ pub fn run(id: &str) -> Result<()> {
 pub fn run_in(base: &Path, id: &str) -> Result<()> {
     let dir = job_dir(base, id)?;
     let lock = OpenOptions::new().create(true).truncate(false).write(true).open(dir.join("lock"))?;
-    if !util::try_lock(&lock)? {
+    if !lock_settled(&lock)? {
         return Err(Error::other("this job is already running"));
     }
     let spec: JobSpec = serde_json::from_slice(&fs::read(dir.join("spec.json"))?)?;
