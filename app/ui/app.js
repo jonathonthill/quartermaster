@@ -208,9 +208,15 @@ async function connect(i) {
   renderPane(i);
 }
 
+// How far down each folder was scrolled, by location and path, so going back returns to the same spot.
+const scrolls = new Map();
+
 async function load(i, path, { push = true } = {}) {
   const p = S.panes[i];
   const prev = p.listing?.path;
+  // Remember how far down this folder was scrolled, to come back to the same place.
+  const shown = document.querySelector(`#pane${i} .list`);
+  if (prev && shown && !p.hits && p.status === 'ready') scrolls.set(`${p.loc}\n${prev}`, shown.scrollTop);
   p.status = 'loading';
   p.hits = null;
   p.query = '';
@@ -227,6 +233,7 @@ async function load(i, path, { push = true } = {}) {
     if (push && prev && prev !== listing.path) p.back.push(prev);
     p.listing = listing;
     p.path = listing.path;
+    p.restoreScroll = listing.path !== prev ? scrolls.get(`${p.loc}\n${listing.path}`) ?? null : null;
     p.sel.clear();
     p.anchor = -1;
     p.status = 'ready';
@@ -540,7 +547,6 @@ function renderPane(i) {
     list.append(row);
   });
   root.append(list);
-  if (keepScroll) list.scrollTop = keepScroll;
 
   // Footer
   const selItems = items.filter((it) => p.sel.has(it.path));
@@ -555,6 +561,11 @@ function renderPane(i) {
     archive ? h('span', { text: '· sizes are space used' }) : null,
   );
   root.append(foot);
+  // Scroll only once the footer is in, or the list is still too tall and the browser cuts the
+  // scroll short.
+  if (keepScroll) list.scrollTop = keepScroll;
+  else if (p.restoreScroll && p.status === 'ready') list.scrollTop = p.restoreScroll;
+  if (p.status === 'ready') p.restoreScroll = null;
   updateXferButtons();
 }
 
