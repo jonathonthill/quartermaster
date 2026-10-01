@@ -5,40 +5,52 @@
 <h1 align="center">Quartermaster</h1>
 
 <p align="center">
-  Move research data between your computer, analysis servers, and an archive,<br>
-  with every file checked, and nothing deleted until everything has arrived.
+  A safe, verifiable home for finished research data.<br>
+  Stow past projects in an archive on your lab's storage server, and get any file back years later.
 </p>
 
 <p align="center">
   <a href="https://github.com/jonathonthill/quartermaster/releases"><b>Download for macOS, Windows, or Linux</b></a>
 </p>
 
-## What it does
+## Why
 
-Quartermaster has two panes, like an FTP program, and two modes, switched in the top bar.
+Finished projects pile up on analysis servers, laptops, and external drives. Moving them to
+the lab's storage server by hand is slow and easy to get wrong. A large copy can be silently
+corrupted, and years later nobody can say whether an archived project is complete, or still
+readable. Quartermaster makes archiving a project as simple as dragging a folder, and keeps
+checking that it stays intact.
 
-| | **Transfer** mode | **Stow** mode |
-|---|---|---|
-| **For** | Everyday copies between machines | Long-term storage in an archive (a *datahold*) |
-| **Left and right** | This computer, a file server, or an SFTP server, on either side | This computer or a file server → a datahold |
-| **Files arrive** | Exactly as they were | Compressed, with duplicates stored once, sealed into a *barrel* per project, and protected with PAR2 repair data |
-| **Checked by** | SHA-256 checksum of every file | SHA-256 checksum of every file, rechecked on a schedule |
-| **Getting files back** | Copy them back | Retrieve any single file or folder; no unpacking needed |
+## Dataholds
 
-Both modes:
+A **datahold** is an archive on your storage server. Each folder you stow becomes a sealed
+project, called a **barrel**.
 
-- **Check every file.** A copy only takes its final name once its checksum matches the original.
-- **Never lose originals.** *Move* deletes them only after the whole transfer has arrived and been verified.
-- **Continue where they stopped.** Pause and play any transfer, even after a lost connection or a restart.
-- **Can be undone.** *Abandon ship* (the skull) stops a transfer and removes only what it created.
-- **Sign in like Terminal.** The app uses your computer's own `ssh`, so your `~/.ssh/config`, keys, passwords, and Duo all work, with the prompts shown in the app.
+| | |
+|---|---|
+| **Checked end to end** | Every file is checksummed (SHA-256) where it starts and again where it lands. A file counts as archived only once the two match. |
+| **Originals kept until it's safe** | Choose *Move*, and the originals are deleted only after the whole project is archived and verified. |
+| **Protected against damage** | Data is bundled into large packs with PAR2 recovery data, so damaged blocks can be repaired, not just detected. |
+| **Checked over time** | The server rechecks every pack on a schedule and repairs what it can, so problems surface early, not years later. |
+| **Sealed barrels** | An archived project can be added to, renamed, or moved as a whole, but nothing inside it can be changed or deleted by accident. |
+| **Compact** | Files are compressed, and duplicates within a project are stored once. |
+| **Easy to get back** | Browse the datahold like ordinary folders, search it, and retrieve any single file or folder without unpacking anything. |
+| **Never locked in** | A plain-text index lists every file and where its bytes are, so data can be found with `grep` and extracted with standard tools, even without Quartermaster. The format is [documented](docs/FORMAT.md). |
+| **Forgiving** | Something thrown *Overboard* can be restored for 30 days. |
 
-It can also:
+Getting data there is just as careful:
 
-- **Use servers you can't install anything on**, as *SFTP servers* (Transfer mode). These are checked by size and date, or fully by reading each upload back.
-- **Run transfers on the server itself.** Between a file server and a datahold, the data goes straight from server to server, so you can close your laptop.
-- **Keep a Trash on servers.** Deleting sends things to the Trash, here and on servers, where you can restore them or delete them for good.
-- **Open several windows** (⌘N), each with its own connections and transfers.
+- **Straight from the analysis server.** Projects on an analysis server go directly to the datahold, server to server, so you can close your laptop while they move.
+- **Interruptions don't matter.** Pause, lose the connection, or restart: a transfer continues where it stopped.
+- **Undo a mistake.** *Abandon ship* (the skull) stops a transfer and removes only what it created.
+- **Your usual sign-in.** The app uses your computer's own `ssh`, so your `~/.ssh/config`, keys, passwords, and Duo all work, with the prompts shown in the app.
+
+## Also: everyday transfers
+
+The same careful copying works for ordinary files too. Switch the top bar from **Stow** to
+**Transfer**, and both panes can show this computer or any server, like an SFTP client. Files
+arrive exactly as they were, each one checksummed, and they can be resumed and undone the same
+way. Servers you can't install anything on can be added as **SFTP servers**.
 
 ## Getting started
 
@@ -46,26 +58,19 @@ It can also:
    - **macOS**: drag Quartermaster to Applications, then right-click it and choose **Open**, and **Open** again. If macOS says the app "is damaged", run `xattr -dr com.apple.quarantine /Applications/Quartermaster.app` in Terminal.
    - **Windows**: if SmartScreen appears, choose **More info**, then **Run anyway**. (Windows builds are newer and less tested.)
    - **Linux**: use the `.AppImage` (make it executable) or the `.deb`.
-2. **Add a server.** In a pane's menu, choose **Add a file server…** (or **Add a datahold…** in Stow mode). Enter its address and press **Connect**. Untick **Save this server** for a one-off connection.
+2. **Add your datahold.** In the right pane's menu, choose **Add a datahold…**. Enter the storage server's address and the folder for the archive, then press **Connect**. If there's no datahold there yet, **Test connection** offers to create one.
 3. **Let it install its helper**, if asked. A small program goes into your home folder on the server; nothing needs an administrator.
-4. **Select files and press → or ←**, or drag them across. Choose **Copy** or **Move**, and watch progress in the **Dock** along the bottom.
+4. **Stow a project.** On the left, open the folder holding it (on this computer, or an analysis server added with **Add a file server…**). Select it and press **→**. Choose **Copy** or **Move**, and watch it in the **Dock** along the bottom.
 
 ## Words you'll see
 
 | In the app | Means |
 |---|---|
 | **Datahold** | An archive on a storage server |
-| **Barrel** | A project in a datahold: a sealed folder you can add to, rename, or move as a whole, but not change inside |
+| **Barrel** | A sealed project in a datahold |
 | **Dock** | The list of transfers along the bottom |
 | **Abandon ship** | Stop a transfer and undo it |
-| **Throw overboard** | Delete: to the Trash on your computer or a server, or to a datahold's **Overboard** (restorable for 30 days) |
-
-## Tips
-
-- **⌘L** (or typing `/` or `~` in a list) lets you type a folder path; **Tab** completes it.
-- **Delete** (or ⌘⌫) sends the selection to the Trash. Nothing pops up, because it can be undone.
-- Closing a window with transfers running asks first: **Pause and close** keeps them for later.
-- Going back to a folder returns to where you were scrolled.
+| **Throw overboard** | Delete: to the Trash, or to a datahold's **Overboard** (restorable for 30 days) |
 
 ## More
 
@@ -73,4 +78,4 @@ It can also:
 - [Developing](docs/DEVELOPING.md): building, setting up servers by hand, importing old backups, and the `archive` command-line tool
 - [Storage format](docs/FORMAT.md) and [protocol](docs/PROTOCOL.md)
 
-Quartermaster is MIT licensed. Servers: Linux and FreeBSD (including TrueNAS) on x86_64 run the helper; anything with SFTP works in Transfer mode.
+Quartermaster is MIT licensed. The server helper runs on Linux and FreeBSD (including TrueNAS) on x86_64.
