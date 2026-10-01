@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quartermaster</title>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="toolbar" data-tauri-drag-region>
+    <span class="brand" id="brand" data-tauri-drag-region></span>
+    <span class="spacer" data-tauri-drag-region></span>
+    <div class="seg mode-switch" id="mode-switch" role="tablist" aria-label="Mode"></div>
+    <button class="icon-btn" id="settings-btn" title="Settings" aria-label="Settings"></button>
+  </div>
+  <div class="modebar" id="modebar"></div>
+  <div class="main">
+    <section class="pane left" id="pane0"></section>
+    <div class="middle">
+      <button class="xfer-btn" id="to-right" aria-label="Send to the right"></button>
+      <button class="xfer-btn" id="to-left" aria-label="Send to the left"></button>
+    </div>
+    <section class="pane right" id="pane1"></section>
+  </div>
+  <div class="transfers" id="transfers"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

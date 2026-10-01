@@ -1,0 +1,31 @@
+[package]
+name = "archive-core"
+description = "Storage format, catalog, and transfer engine for the Archive tool"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+zstd.workspace = true
+rusqlite.workspace = true
+filetime.workspace = true
+getrandom.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+unicode-normalization = "0.1"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+# On ARM (Apple silicon), sha2 uses the CPU's SHA-256 instructions only with
+# its "asm" feature; without it, every checksum is computed in software. x86_64
+# already uses SHA-NI when the CPU has it, so the server helpers don't need it.
+[target.'cfg(target_arch = "aarch64")'.dependencies]
+sha2 = { workspace = true, features = ["asm"] }

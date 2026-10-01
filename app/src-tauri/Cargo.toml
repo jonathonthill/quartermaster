@@ -1,0 +1,28 @@
+[package]
+name = "archive-app"
+description = "Archive desktop app"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "archive-app"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+archive-core = { path = "../../crates/core" }
+tauri = { version = "2", features = [] }
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+trash = "5.2.9"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+tempfile.workspace = true

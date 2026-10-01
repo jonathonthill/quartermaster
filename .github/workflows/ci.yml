@@ -1,0 +1,37 @@
+# Tests on every push and pull request.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-22.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Linux packages (webview and par2)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf par2
+      - name: par2
+        if: runner.os == 'macOS'
+        run: brew install par2
+      # The app bundles the server helpers; a placeholder is enough to compile.
+      - run: mkdir -p dist/helpers && echo "Built by scripts/build-helpers.sh" > dist/helpers/README
+        shell: bash
+      - name: Test
+        if: runner.os != 'Windows'
+        run: cargo test --workspace
+      # The tests assume a Unix file system, so Windows is only built for now.
+      - name: Build
+        if: runner.os == 'Windows'
+        run: cargo build --workspace

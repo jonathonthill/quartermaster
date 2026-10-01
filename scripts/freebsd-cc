@@ -1,0 +1,7 @@
+#!/bin/sh
+# C compiler and linker driver for x86_64-unknown-freebsd, using Apple/LLVM
+# clang for compiling and Rust's bundled lld for linking. See build-helpers.sh.
+here="$(cd "$(dirname "$0")/.." && pwd)"
+sysroot="${FREEBSD_SYSROOT:-$here/.toolchain/freebsd-13.1}"
+gccld="$(rustc --print sysroot)/lib/rustlib/$(rustc -vV | sed -n 's/^host: //p')/bin/gcc-ld"
+exec clang --target=x86_64-unknown-freebsd13 --sysroot="$sysroot" -fuse-ld=lld -B"$gccld" -Wno-unused-command-line-argument "$@"

@@ -1,0 +1,7 @@
+#!/bin/sh
+# C compiler for x86_64-unknown-linux-musl (static Linux builds), using
+# Apple/LLVM clang with Alpine's musl headers. Linking is done by rustc with
+# its own musl C library and lld. See build-helpers.sh.
+here="$(cd "$(dirname "$0")/.." && pwd)"
+sysroot="${MUSL_SYSROOT:-$here/.toolchain/musl-1.2.5}"
+exec clang --target=x86_64-linux-musl --sysroot="$sysroot" -Wno-unused-command-line-argument "$@"

@@ -1,0 +1,19 @@
+[package]
+name = "archive-helper"
+description = "Server-side helper for the Archive tool: serves the protocol over SSH and runs maintenance"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+archive-core = { path = "../core" }
+anyhow.workspace = true
+clap.workspace = true
+serde_json.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+tempfile.workspace = true

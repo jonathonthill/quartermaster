@@ -1,0 +1,68 @@
+# Pushing a tag like v0.1.0 builds the app for macOS, Windows, and Linux and
+# attaches it to a draft release, to be checked and published by hand.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  helpers:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: scripts/build-helpers.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: helpers
+          path: dist/helpers
+
+  app:
+    needs: helpers
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            args: --target universal-apple-darwin
+            targets: aarch64-apple-darwin,x86_64-apple-darwin
+          - os: ubuntu-22.04
+            args: ''
+            targets: ''
+          - os: windows-latest
+            args: ''
+            targets: ''
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: helpers
+          path: dist/helpers
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.targets }}
+      - name: Linux packages
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - run: npm ci
+        working-directory: app
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: app
+          tagName: ${{ github.ref_name }}
+          releaseName: Quartermaster ${{ github.ref_name }}
+          releaseBody: See the README for how to open these unsigned builds the first time.
+          releaseDraft: true
+          args: ${{ matrix.args }}
