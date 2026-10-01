@@ -812,6 +812,11 @@ fn move_original(src: &mut dyn Endpoint, p: &Planned, report: &mut CopyReport, o
             Ok(()) => {
                 report.removed += 1;
                 on(&Event::Removed { path: p.src.clone() });
+                // A Mac keeps a file's extra details in "._name" beside it on some disks, and
+                // removes it with the file; elsewhere it would be left behind.
+                if let Some((dir, name)) = p.src.rsplit_once(['/', '\\']) {
+                    let _ = src.remove(&src.join(dir, &format!("._{name}")));
+                }
             }
             Err(e) => {
                 report.kept.push((p.src.clone(), e.to_string()));
