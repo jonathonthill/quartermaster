@@ -9,6 +9,7 @@
   --border: rgba(20, 36, 58, 0.12);
   --border-strong: rgba(20, 36, 58, 0.24);
   --hover: rgba(20, 36, 58, 0.05);
+  --stripe: rgba(20, 36, 58, 0.035);
   --sel: #f5e4a2;
   --sel-text: #4a3606;
   --sel-inactive: #ebe4d4;
@@ -46,6 +47,7 @@
   --border: rgba(221, 181, 60, 0.16);
   --border-strong: rgba(221, 181, 60, 0.32);
   --hover: rgba(221, 181, 60, 0.07);
+  --stripe: rgba(246, 236, 216, 0.035);
   --sel: #645012;
   --sel-text: #fff0cc;
   --sel-inactive: #1b355c;
@@ -131,19 +133,28 @@ body[data-mode="transfer"] .modebar .ic { color: var(--accent); }
 .link { color: var(--accent); cursor: pointer; background: none; border: 0; padding: 0; }
 
 /* Main area */
-.main { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr); min-height: 0; }
+.main { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 16px minmax(0, 1fr); min-height: 0; }
 .pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--panel); position: relative; }
 .stow-hint { position: absolute; inset: 10px; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 2px dashed var(--gold); border-radius: 12px; background: var(--stow-bg); pointer-events: none; }
 .stow-title { font-size: 16px; font-weight: 600; color: var(--text); }
 .stow-sub { font-size: 12px; color: var(--text-2); }
 .pane.left { border-right: 1px solid var(--border); }
 .pane.right { border-left: 1px solid var(--border); }
-.middle { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: var(--bg); }
-.xfer-btn { width: 38px; height: 34px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--panel); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text); }
-.xfer-btn:hover:not(:disabled) { background: var(--sel); color: var(--sel-text); border-color: var(--accent); }
-.xfer-btn:disabled { opacity: 0.35; cursor: default; }
+/* The transfer button: one tall button over the gap, a third over each pane, centered on the
+   file lists (never higher than just below the location row). → on top, ← below, the frigate
+   between; short windows drop the ship. */
+.middle { position: relative; z-index: 3; background: var(--bg); }
+.xfer { position: absolute; left: 50%; top: max(calc(50% + 56px), 186px); transform: translate(-50%, -50%); width: 48px; height: 128px; display: flex; flex-direction: column; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--panel); overflow: hidden; }
+.xfer-half { flex: 1; display: flex; align-items: center; justify-content: center; border: 0; background: none; padding: 0; cursor: pointer; color: var(--text); }
+.xfer-half:hover:not(.off) { background: var(--sel); color: var(--sel-text); }
+.xfer-half.off { opacity: 0.3; cursor: default; }
+.xfer-ship { flex: 0 0 28px; display: flex; align-items: center; justify-content: center; color: var(--gold); }
+.xfer.compact { height: 80px; top: max(calc(50% + 56px), 162px); }
+.xfer.compact .xfer-ship { display: none; }
+.xfer.compact .xfer-half + .xfer-half { border-top: 1px solid var(--border); }
 
 .pane-head { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.pane-head .type-icon { display: inline-flex; color: var(--gold); flex: none; }
 .pane-head select { flex: 1; min-width: 0; height: 30px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--panel); padding: 0 8px; }
 .status { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-2); white-space: nowrap; }
 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-3); }
@@ -177,14 +188,23 @@ body[data-mode="transfer"] .modebar .ic { color: var(--accent); }
 .search-row input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 .search-row .scope { font-size: 11px; color: var(--text-3); white-space: nowrap; max-width: 40%; overflow: hidden; text-overflow: ellipsis; }
 
+/* Rows keep clear of the transfer button: text stops 36px from the pane's inner edge. Stripes
+   and the selection are inset 6px from the outer edge and 30px from the inner one. */
 .cols, .row { display: grid; grid-template-columns: minmax(0, 1fr) 84px 104px; gap: 8px; padding: 0 12px; align-items: center; }
+.pane.left .cols { padding: 0 36px 0 12px; }
+.pane.right .cols { padding: 0 12px 0 36px; }
+.pane .row { padding: 0 6px; }
+.pane.left .row { margin: 0 30px 0 6px; }
+.pane.right .row { margin: 0 6px 0 30px; }
+.list { padding: 2px 0; }
 .cols { height: 26px; font-size: 11px; color: var(--cols); border-bottom: 1px solid var(--border); }
 .cols span { cursor: pointer; }
 .cols span:hover { color: var(--text); }
 .cols .num, .row .num { text-align: right; }
 .list { flex: 1; overflow-y: auto; outline: none; }
-.row { height: 30px; border-bottom: 1px solid var(--border); cursor: default; }
-.row:hover { background: var(--hover); }
+.row { height: 30px; cursor: default; }
+.row:nth-child(even) { background: var(--stripe); }
+.row:hover { background: var(--hover); border-radius: 7px; }
 .row .name { display: flex; align-items: center; gap: 7px; min-width: 0; }
 .row .name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row .num { color: var(--text-2); font-size: 12px; white-space: nowrap; }
@@ -193,7 +213,9 @@ body[data-mode="transfer"] .modebar .ic { color: var(--accent); }
 .row .ic.barrel { color: var(--gold); }
 .list:focus .row.sel, .row.sel.drop { background: var(--sel); color: var(--sel-text); }
 .list:focus .row.sel .num, .list:focus .row.sel .ic { color: inherit; }
-.row.sel { background: var(--sel-inactive); }
+.row.sel { background: var(--sel-inactive); border-radius: 7px; }
+.row.sel:hover { background: var(--sel-inactive); }
+.list:focus .row.sel:hover { background: var(--sel); }
 .row.drop { outline: 2px solid var(--accent); outline-offset: -2px; }
 .list.drop { box-shadow: inset 0 0 0 2px var(--accent); }
 .hit-folder { font-size: 11px; color: var(--text-3); overflow: hidden; text-overflow: ellipsis; }

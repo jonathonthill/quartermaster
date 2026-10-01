@@ -1216,13 +1216,13 @@ fn main() {
         ])
         .build(tauri::generate_context!())
         .expect("error while building the Archive app")
-        .run(|app, event| match event {
+        .run(|_app, event| match event {
             // On a Mac, closing the last window leaves the app running (transfers carry on,
             // and its Dock icon opens a window again). Quit, ⌘Q, still quits.
             tauri::RunEvent::ExitRequested { api, code, .. } if cfg!(target_os = "macos") && code.is_none() => api.prevent_exit(),
             #[cfg(target_os = "macos")]
             tauri::RunEvent::Reopen { has_visible_windows: false, .. } => {
-                let _ = new_window(app);
+                let _ = new_window(_app);
             }
             _ => {}
         });

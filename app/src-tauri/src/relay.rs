@@ -139,7 +139,7 @@ impl KeepAwake {
         }
         #[cfg(not(target_os = "macos"))]
         {
-            let _ = Command::new;
+            let _ = Command::new::<&str>;
             KeepAwake(None)
         }
     }

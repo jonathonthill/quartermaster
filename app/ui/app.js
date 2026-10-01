@@ -61,6 +61,7 @@ const I = {
   pencil: () => svg('<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>'),
   chevron: () => svg('<path d="m6 9 6 6 6-6"/>', 14),
   server: (size) => svg('<rect width="20" height="8" x="2" y="2" rx="2" ry="2"/><rect width="20" height="8" x="2" y="14" rx="2" ry="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/>', size),
+  laptop: (size) => svg('<path d="M18 5a2 2 0 0 1 2 2v8.526a2 2 0 0 0 .212.897l1.068 2.127a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45l1.068-2.127A2 2 0 0 0 4 15.526V7a2 2 0 0 1 2-2z"/><path d="M20.054 15.987H3.946"/>', size),
   globe: (size) => svg('<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>', size),
   barrel: () => svg(BARREL),
   play: () => svg('<path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/>', 14),
@@ -69,6 +70,20 @@ const I = {
   skull: () => svg('<path d="m12.5 17-.5-1-.5 1h1z"/><path d="M15 22a1 1 0 0 0 1-1v-1a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20v1a1 1 0 0 0 1 1z"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="12" r="1"/>', 15),
   clearList: () => svg('<path d="M16 5H3"/><path d="M11 12H3"/><path d="M16 19H3"/><path d="m15.5 9.5 5 5"/><path d="m20.5 9.5-5 5"/>'),
   wheel: () => svg('<circle cx="12" cy="12" r="8"/><path d="M12 2v7.5"/><path d="m19 5-5.23 5.23"/><path d="M22 12h-7.5"/><path d="m19 19-5.23-5.23"/><path d="M12 14.5V22"/><path d="M10.23 13.77 5 19"/><path d="M9.5 12H2"/><path d="M10.23 10.23 5 5"/><circle cx="12" cy="12" r="2.5"/>', 24),
+  // The frigate from the app icon, as a filled silhouette (drawn for this app, not from Lucide).
+  frigate: () => {
+    const s = svg('<rect x="9.6" y="7" width="0.9" height="18"/><rect x="20.3" y="0.6" width="0.9" height="24"/><rect x="30.4" y="3.6" width="0.9" height="21"/>'
+      + '<path d="M21.2 0.4h4.2l-1.2 0.9 1.2 0.9h-4.2z"/><path d="M7.6 8.6h4.8l0.3 3h-5.4z"/><path d="M6.8 12.4h6.6l0.3 4h-7.2z"/><path d="M6.3 17.2h7.6l0.3 4.6h-8.2z"/>'
+      + '<path d="M17.4 2.6h6.2l0.3 3.6h-6.8z"/><path d="M16.2 7h8.8l0.3 6h-9.4z"/><path d="M15 13.8h11l0.3 6.6h-11.6z"/><path d="M14 21.2h13l0.2 3.4h-13.4z"/>'
+      + '<path d="M27.8 5.4h5.8l0.3 3.4h-6.4z"/><path d="M27.2 9.6h7l0.3 5h-7.6z"/><path d="M26.8 15.4h7.8l0.3 5.6h-8.4z"/><path d="M35.2 9.2 47 24.2h-11.4z"/>'
+      + '<path d="M0 22.2h7.6v2.6H0z"/><path d="M0 25.4h40.5L48 24.2q-3.6 6.2-9.6 9.6H7.2Q1.6 31 0 25.4z"/>');
+    s.setAttribute('viewBox', '0 0 48 34');
+    s.setAttribute('width', 26);
+    s.setAttribute('height', 18);
+    s.setAttribute('fill', 'currentColor');
+    s.setAttribute('stroke', 'none');
+    return s;
+  },
   // A datahold: two Lucide barrels, the back one cut away where the front one overlaps it.
   datahold: (size = 16) => {
     const id = `dh${++maskIds}`;
@@ -416,8 +431,9 @@ function renderPane(i) {
   const keepScroll = p.shownPath === p.path && !p.hits ? root.querySelector('.list')?.scrollTop : null;
   p.shownPath = p.path;
   root.replaceChildren();
-  const dataholdIcon = isArchivePane(p) ? h('span', { class: 'pane-icon' }, I.datahold(18)) : null;
-  root.append(h('div', { class: 'pane-head' }, dataholdIcon, locationSelect(i), statusBadge(p)));
+  // What kind of place this is: this computer, a file server, an SFTP server, or a datahold.
+  const kind = p.loc === 'local' ? I.laptop(18) : p.loc ? serverIcon(serverById(p.loc), 18) : stowMode() && i === 1 ? I.datahold(18) : I.server(18);
+  root.append(h('div', { class: 'pane-head' }, h('span', { class: 'type-icon' }, kind), locationSelect(i), statusBadge(p)));
 
   if (!p.loc) {
     root.append(stowMode() || i === 0
@@ -1064,17 +1080,36 @@ function updateXferButtons() {
   const r = document.getElementById('to-right');
   const l = document.getElementById('to-left');
   if (!r) return;
-  const ready = (i) => S.panes[i].status === 'ready' && S.panes[i].sel.size > 0 && !plan(i, 1 - i).error && S.panes[1 - i].status === 'ready';
-  r.disabled = !ready(0);
-  l.disabled = !ready(1);
-  if (stowMode()) {
-    r.title = 'Send the selection to the datahold (you choose Copy or Move next)';
-    l.title = 'Retrieve the selection from the datahold (always a copy)';
-  } else {
-    const why = plan(0, 1).error;
-    r.title = why || 'Transfer the selection to the right (you choose Copy or Move next)';
-    l.title = why || 'Transfer the selection to the left (you choose Copy or Move next)';
+  // An arrow that can't be used is dimmed, and its tooltip says why (a disabled button shows no tooltip).
+  const place = (i) => (S.panes[i].loc === 'local' ? 'this computer' : serverById(S.panes[i].loc)?.name || 'the other side');
+  const what = (i) => {
+    const n = S.panes[i].sel.size;
+    const one = n === 1 && sortedItems(S.panes[i]).find((it) => S.panes[i].sel.has(it.path));
+    return one ? `“${one.name}”` : `${n} items`;
+  };
+  const why = (from) => {
+    const to = 1 - from;
+    if (!S.panes[from].loc || !S.panes[to].loc) return 'Choose a place on both sides first';
+    if (S.panes[from].status !== 'ready' || S.panes[to].status !== 'ready') return 'Wait for both sides to finish opening';
+    if (!S.panes[from].sel.size) return `Select files on the ${from === 0 ? 'left' : 'right'} to ${stowMode() ? (from === 0 ? 'send them to the datahold' : 'retrieve them') : `copy them ${from === 0 ? 'right' : 'left'}`}`;
+    return plan(from, to).error || null;
+  };
+  for (const [btn, from] of [[r, 0], [l, 1]]) {
+    const no = why(from);
+    btn.classList.toggle('off', !!no);
+    btn.setAttribute('aria-disabled', no ? 'true' : 'false');
+    btn.title = no
+      || (stowMode()
+        ? from === 0 ? `Send ${what(0)} to ${place(1)} (you choose Copy or Move next)` : `Retrieve ${what(1)} to ${place(0)} (always a copy)`
+        : `Copy or move ${what(from)} to ${place(1 - from)}`);
   }
+}
+
+// In a short window the transfer button drops the ship, so it stays clear of the location rows.
+function fitXfer() {
+  const main = document.querySelector('.main');
+  const xfer = document.getElementById('xfer');
+  if (main && xfer) xfer.classList.toggle('compact', main.clientHeight < 290);
 }
 
 // The project an archive folder is in (or is), by its path, if known; null outside projects.
@@ -2195,8 +2230,10 @@ async function start() {
   document.getElementById('settings-btn').onclick = () => settingsDialog();
   document.getElementById('to-right').append(I.right());
   document.getElementById('to-left').append(I.left());
-  document.getElementById('to-right').onclick = () => transfer(0, 1);
-  document.getElementById('to-left').onclick = () => transfer(1, 0);
+  document.querySelector('.xfer-ship').append(I.frigate());
+  document.getElementById('to-right').onclick = (e) => !e.currentTarget.classList.contains('off') && transfer(0, 1);
+  document.getElementById('to-left').onclick = (e) => !e.currentTarget.classList.contains('off') && transfer(1, 0);
+  new ResizeObserver(fitXfer).observe(document.querySelector('.main'));
   renderMode();
 
   document.addEventListener('keydown', (e) => {

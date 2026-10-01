@@ -18,8 +18,11 @@
   <div class="main">
     <section class="pane left" id="pane0"></section>
     <div class="middle">
-      <button class="xfer-btn" id="to-right" aria-label="Send to the right"></button>
-      <button class="xfer-btn" id="to-left" aria-label="Send to the left"></button>
+      <div class="xfer" id="xfer">
+        <button class="xfer-half" id="to-right" aria-label="Send to the right"></button>
+        <span class="xfer-ship" aria-hidden="true"></span>
+        <button class="xfer-half" id="to-left" aria-label="Send to the left"></button>
+      </div>
     </div>
     <section class="pane right" id="pane1"></section>
   </div>
