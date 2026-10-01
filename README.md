@@ -48,9 +48,19 @@ Getting data there is just as careful:
 ## Also: everyday transfers
 
 The same careful copying works for ordinary files too. Switch the top bar from **Stow** to
-**Transfer**, and both panes can show this computer or any server, like an SFTP client. Files
-arrive exactly as they were, each one checksummed, and they can be resumed and undone the same
-way. Servers you can't install anything on can be added as **SFTP servers**.
+**Transfer**, and both panes can show this computer or any server. That covers what most people
+use FileZilla for (two panes, drag and drop, a transfer queue, resuming), in a cleaner window
+with fewer settings to get wrong. It also does several things FileZilla doesn't:
+
+- **Every file is verified.** Each copy is checksummed against the original before it takes its final name, so a bad copy never passes for a good one.
+- **Move is safe.** Originals are deleted only after the whole transfer has arrived and been verified.
+- **Mistakes can be undone.** *Abandon ship* removes what a transfer created, and deleting sends things to a Trash, even on servers.
+- **Partial files stay out of the way.** An interrupted copy waits under a hidden name and picks up where it stopped, rather than leaving a half-written file behind.
+- **One sign-in, done your way.** It uses your own `ssh`, so aliases in `~/.ssh/config`, keys, jump hosts, passwords, and Duo just work, and one sign-in covers every window and transfer to that server.
+- **Fast to get around.** Type a path with Tab completion, search a whole folder tree on the server, jump to Places, and open several windows.
+
+Servers you can't install anything on can be added as **SFTP servers**. Plain FTP isn't
+supported, since it sends passwords unencrypted.
 
 ## Getting started
 
